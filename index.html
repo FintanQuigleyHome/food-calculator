@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FoodCalc">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Food Calculator</title>
+<style>
+:root{
+  --bg:#eef2f7; --card:#fff; --ink:#102033; --muted:#66768a; --line:#d8e0e8;
+  --brand:#1457d9; --brand2:#0f46b7; --danger:#b42318; --warn:#b54708; --ok:#067647;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+body{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);overflow-x:hidden}
+button,input{font:inherit}
+.shell{
+  max-width:620px;margin:auto;padding:10px 12px 12px;
+  min-height:100dvh;display:flex;flex-direction:column;gap:8px
+}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;background:#0b1220;color:#fff;
+  padding:12px 14px;border-radius:18px;flex:0 0 auto
+}
+.topbar h1{font-size:20px;margin:0}
+.topbar .sub{font-size:11px;color:#b7c2d0;margin-top:1px}
+.iconbtn{border:0;background:#1f2b3f;color:#fff;border-radius:11px;padding:9px 11px;font-weight:800}
+
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:17px;padding:12px;
+  box-shadow:0 6px 18px rgba(16,32,51,.05);flex:0 0 auto
+}
+.step{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.num{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:#e8efff;color:#174ea6;font-weight:900}
+.step h2{font-size:16px;margin:0}
+label{display:block;font-size:12px;font-weight:800;margin:7px 0 4px}
+input[type="number"],input[type="text"]{
+  width:100%;padding:10px 11px;border:1px solid #cfd8e3;border-radius:12px;background:#fff;font-size:16px
+}
+input:focus{outline:3px solid rgba(20,87,217,.12);border-color:var(--brand)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn{border:0;border-radius:13px;padding:11px 12px;font-weight:850}
+.primary{background:var(--brand);color:#fff}
+.primary:active{background:var(--brand2)}
+.secondary{background:#edf2f8;color:#1c3558}
+
+.photoRow{display:grid;grid-template-columns:1.25fr .9fr;gap:8px;margin-bottom:8px}
+.photoBtn{min-height:58px;display:flex;align-items:center;justify-content:center;gap:8px}
+.camera{font-size:21px}
+.thumb{
+  display:none;grid-template-columns:54px 1fr auto;gap:9px;align-items:center;
+  padding:7px;border:1px solid #dbe3ec;border-radius:12px;background:#f8fafc;margin-bottom:8px
+}
+.thumb.show{display:grid}
+.thumb img{width:54px;height:54px;object-fit:cover;border-radius:9px}
+.thumbText{font-size:12px;color:var(--muted)}
+.thumbText strong{display:block;color:var(--ink);font-size:13px}
+.removePhoto{border:0;background:transparent;color:var(--brand);font-weight:800;padding:6px}
+.fileInput{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+
+.inlineLabel{display:grid;grid-template-columns:1fr 112px;gap:8px;align-items:end}
+.tinyBtn{padding:10px 8px;font-size:12px}
+.help{font-size:10.5px;color:var(--muted);margin-top:4px}
+
+.calcCard{padding:10px 12px}
+.calcTop{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.calcTitle{font-size:13px;font-weight:800}
+.dose{font-size:31px;line-height:1;font-weight:950;color:#073c87}
+.resultBox{
+  display:none;margin-top:8px;background:#eef4ff;border:1px solid #c7d7fe;border-radius:13px;padding:9px 10px
+}
+.resultBox.show{display:block}
+.resultRow{display:flex;justify-content:space-between;font-size:12px;padding:3px 0}
+.resultActions{display:grid;grid-template-columns:.8fr 1.2fr;gap:7px;margin-top:7px}
+.small{font-size:11px;color:var(--muted);line-height:1.35}
+.note{margin-top:7px;padding:8px 9px;border-radius:11px;font-size:11px;line-height:1.3}
+.warn{background:#fff6ed;color:#93370d;border:1px solid #fedf89}
+.danger{background:#fef3f2;color:#912018;border:1px solid #fecdca}
+.ok{background:#ecfdf3;color:#05603a;border:1px solid #abefc6}
+
+.footer{font-size:9.5px;color:var(--muted);line-height:1.25;padding:0 3px 3px;flex:0 0 auto}
+
+/* Photo confirmation popup */
+.modal{
+  position:fixed;inset:0;background:rgba(11,18,32,.62);display:none;align-items:center;justify-content:center;
+  z-index:50;padding:18px
+}
+.photoConfirm{
+  width:min(100%,430px);background:#fff;border-radius:22px;padding:14px;box-shadow:0 24px 70px rgba(0,0,0,.3)
+}
+.modalHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.modalHead h2{font-size:18px;margin:0}
+.close{border:0;background:#eef2f7;border-radius:10px;padding:7px 9px;font-weight:800}
+.confirmImg{width:100%;max-height:52vh;object-fit:cover;border-radius:15px;background:#eef2f7}
+.modalActions{display:grid;grid-template-columns:.8fr 1.2fr;gap:8px;margin-top:10px}
+
+/* Settings/history sheet */
+.sheet{width:100%;max-width:620px;background:#fff;border-radius:24px;padding:16px;max-height:85vh;overflow:auto}
+.menuModal{align-items:flex-end}
+.historyItem{padding:8px 0;border-bottom:1px solid var(--line)}
+.historyTop{display:flex;justify-content:space-between;font-weight:800}
+
+/* Target iPhone-sized screens: keep the whole primary workflow visible without scrolling. */
+@media (max-width: 620px) and (min-height: 720px){
+  .shell{height:100dvh;min-height:0;overflow:hidden}
+  .shell.allowScroll{overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .footer{margin-top:auto}
+}
+
+/* Small/short phones get a safe fallback rather than clipping controls. */
+@media (max-height:719px){
+  .shell{min-height:100dvh;overflow:visible}
+}
+
+/* Desktop iPhone preview */
+@media (min-width:850px){
+  body{min-height:100vh;display:grid;place-items:center;padding:28px;
+    background:radial-gradient(circle at top left,rgba(20,87,217,.10),transparent 35%),
+               linear-gradient(180deg,#e7edf5,#dfe6ef)}
+  body::before{content:"Desktop preview · compact iPhone layout";position:fixed;top:18px;left:24px;
+    font-size:13px;font-weight:700;color:#5d6b7c}
+  .shell{
+    width:430px;max-width:430px;height:900px;min-height:0;margin:0;padding:20px 12px 14px;overflow:hidden;
+    border:12px solid #111827;border-radius:54px;background:var(--bg);
+    box-shadow:0 30px 80px rgba(15,23,42,.28),inset 0 0 0 2px rgba(255,255,255,.05);
+    position:relative
+  }
+  .shell.allowScroll{overflow-y:auto;scrollbar-width:none}
+  .shell.allowScroll::-webkit-scrollbar{display:none}
+  .shell::before{content:"";display:block;width:128px;height:28px;margin:-20px auto 8px;background:#111827;border-radius:0 0 18px 18px}
+  .modal{position:absolute;border-radius:42px}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="topbar">
+    <div>
+      <h1>Food Calculator</h1>
+      <div class="sub">BG → photo → meal details → review</div>
+    </div>
+    <button class="iconbtn" onclick="openMenu()" aria-label="Settings and history">•••</button>
+  </div>
+
+  <section class="card">
+    <div class="step"><div class="num">1</div><h2>Blood glucose</h2></div>
+    <label for="bg">BG (mmol/L)</label>
+    <input id="bg" type="number" step="0.1" min="1" max="40" inputmode="decimal" placeholder="e.g. 8.9">
+    <div id="bgState"></div>
+  </section>
+
+  <!-- Sections 2 and 3 are intentionally amalgamated. -->
+  <section class="card">
+    <div class="step"><div class="num">2</div><h2>Meal photo & details</h2></div>
+
+    <div class="photoRow">
+      <button class="btn primary photoBtn" onclick="takePhoto()">
+        <span class="camera">📷</span><span>Take a Photo</span>
+      </button>
+      <button class="btn secondary photoBtn" onclick="choosePhoto()">Choose Existing</button>
+    </div>
+
+    <input class="fileInput" id="cameraInput" type="file" accept="image/*" capture="environment">
+    <input class="fileInput" id="libraryInput" type="file" accept="image/*">
+
+    <div class="thumb" id="thumb">
+      <img id="thumbImg" alt="Confirmed meal photo">
+      <div class="thumbText"><strong>Photo confirmed</strong>Ready to calculate</div>
+      <button class="removePhoto" onclick="clearPhoto()">Change</button>
+    </div>
+
+    <label for="food">Meal name</label>
+    <input id="food" type="text" placeholder="e.g. pasta with chicken">
+
+    <div class="grid">
+      <div>
+        <label for="weight">Weight (g)</label>
+        <input id="weight" type="number" step="1" min="0" inputmode="numeric" placeholder="300">
+      </div>
+      <div>
+        <label for="carbs">Carbs (g)</label>
+        <input id="carbs" type="number" step="0.1" min="0" inputmode="decimal" placeholder="60">
+      </div>
+    </div>
+
+    <div class="inlineLabel">
+      <div>
+        <label for="c100">Carbs per 100 g <span style="font-weight:500;color:var(--muted)">(optional label)</span></label>
+        <input id="c100" type="number" step="0.1" min="0" inputmode="decimal" placeholder="e.g. 20">
+      </div>
+      <button class="btn secondary tinyBtn" onclick="fromLabel()">Use label</button>
+    </div>
+  </section>
+
+  <section class="card calcCard">
+    <div class="calcTop">
+      <div>
+        <div class="step" style="margin:0"><div class="num">3</div><h2>Review calculation</h2></div>
+        <div class="small">Uses the settings saved on this device.</div>
+      </div>
+      <button class="btn primary" onclick="calculate()">Calculate</button>
+    </div>
+    <div id="result" class="resultBox"></div>
+  </section>
+
+  <div class="footer">
+    Personal prototype: arithmetic support only. It does not account for insulin on board, exercise, illness, alcohol, delayed digestion, CGM lag or other clinical factors.
+  </div>
+</div>
+
+<!-- Photo confirmation popup -->
+<div class="modal" id="photoModal">
+  <div class="photoConfirm">
+    <div class="modalHead">
+      <h2>Photo captured</h2>
+      <button class="close" onclick="cancelPhoto()">✕</button>
+    </div>
+    <img id="confirmImg" class="confirmImg" alt="Meal photo preview">
+    <div class="modalActions">
+      <button class="btn secondary" onclick="retakePhoto()">Retake</button>
+      <button class="btn primary" onclick="confirmPhoto()">Use This Photo</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings/history -->
+<div class="modal menuModal" id="menuModal" onclick="outsideClose(event)">
+  <div class="sheet" id="menuSheet">
+    <button class="close" onclick="closeMenu()" style="float:right">Close</button>
+    <h2>Settings & history</h2>
+
+    <label for="ratio">1 unit per grams carbohydrate</label>
+    <input id="ratio" type="number" step="0.1" min="1">
+
+    <label for="target">Target BG (mmol/L)</label>
+    <input id="target" type="number" step="0.1" min="3">
+
+    <label for="isf">Correction factor: 1 unit lowers BG by</label>
+    <input id="isf" type="number" step="0.1" min="0.1">
+
+    <label for="maxDose">Maximum displayed total (units)</label>
+    <input id="maxDose" type="number" step="0.5" min="1">
+
+    <button class="btn primary" style="margin-top:12px;width:100%" onclick="saveSettings()">Save settings</button>
+    <div id="savedState"></div>
+
+    <h2 style="margin-top:20px">Recent meals</h2>
+    <div id="history" class="small">No saved meals yet.</div>
+  </div>
+</div>
+
+<script>
+let pending=null;
+let pendingPhotoData=null;
+let confirmedPhotoData=null;
+let pendingPhotoSource='camera';
+
+const $=id=>document.getElementById(id);
+const num=id=>{const v=parseFloat($(id).value);return Number.isFinite(v)?v:null};
+
+function settings(){
+  const d={ratio:5,target:7,isf:3,maxDose:30};
+  try{return {...d,...JSON.parse(localStorage.getItem('fc_settings')||'{}')}}catch(e){return d}
+}
+function loadSettings(){
+  const s=settings();
+  $('ratio').value=s.ratio;$('target').value=s.target;$('isf').value=s.isf;$('maxDose').value=s.maxDose;
+}
+function saveSettings(){
+  const s={ratio:num('ratio'),target:num('target'),isf:num('isf'),maxDose:num('maxDose')};
+  if(!s.ratio||!s.target||!s.isf||!s.maxDose){
+    $('savedState').innerHTML='<div class="note danger">Enter valid settings.</div>';return
+  }
+  localStorage.setItem('fc_settings',JSON.stringify(s));
+  $('savedState').innerHTML='<div class="note ok">Saved on this device.</div>';
+}
+
+function bgState(){
+  const bg=num('bg'),el=$('bgState');
+  if(bg===null){el.innerHTML='';return}
+  if(bg<4) el.innerHTML='<div class="note danger"><strong>Low BG.</strong> Calculation disabled below 4.0 mmol/L.</div>';
+  else if(bg>=15) el.innerHTML='<div class="note warn"><strong>High BG.</strong> Check your normal high-BG guidance.</div>';
+  else el.innerHTML='';
+}
+$('bg').addEventListener('input',bgState);
+
+function takePhoto(){
+  pendingPhotoSource='camera';
+  $('cameraInput').click();
+}
+function choosePhoto(){
+  pendingPhotoSource='library';
+  $('libraryInput').click();
+}
+function handlePhotoFile(file){
+  if(!file)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    pendingPhotoData=r.result;
+    $('confirmImg').src=pendingPhotoData;
+    $('photoModal').style.display='flex';
+  };
+  r.readAsDataURL(file);
+}
+$('cameraInput').addEventListener('change',e=>handlePhotoFile(e.target.files&&e.target.files[0]));
+$('libraryInput').addEventListener('change',e=>handlePhotoFile(e.target.files&&e.target.files[0]));
+
+function confirmPhoto(){
+  if(!pendingPhotoData)return;
+  confirmedPhotoData=pendingPhotoData;
+  $('thumbImg').src=confirmedPhotoData;
+  $('thumb').classList.add('show');
+  $('photoModal').style.display='none';
+  pendingPhotoData=null;
+}
+function cancelPhoto(){
+  pendingPhotoData=null;
+  $('photoModal').style.display='none';
+  $('cameraInput').value='';
+  $('libraryInput').value='';
+}
+function retakePhoto(){
+  $('photoModal').style.display='none';
+  pendingPhotoData=null;
+  if(pendingPhotoSource==='camera') $('cameraInput').click();
+  else $('libraryInput').click();
+}
+function clearPhoto(){
+  confirmedPhotoData=null;
+  pendingPhotoData=null;
+  $('thumb').classList.remove('show');
+  $('thumbImg').removeAttribute('src');
+  $('cameraInput').value='';
+  $('libraryInput').value='';
+}
+
+function fromLabel(){
+  const w=num('weight'),c=num('c100');
+  if(w===null||c===null){alert('Enter weight and carbs per 100 g.');return}
+  $('carbs').value=(w*c/100).toFixed(1);
+}
+
+function calculate(){
+  const bg=num('bg'),carbs=num('carbs'),s=settings();
+  const out=$('result');
+  out.classList.add('show');
+  if(bg===null||carbs===null){
+    out.innerHTML='<div class="note danger" style="margin:0">Enter BG and carbohydrate grams.</div>';return
+  }
+  if(bg<4){
+    out.innerHTML='<div class="note danger" style="margin:0"><strong>Calculation stopped.</strong> Treat the low according to your established plan first.</div>';return
+  }
+
+  const meal=carbs/s.ratio;
+  const correction=Math.max(0,(bg-s.target)/s.isf);
+  const raw=meal+correction;
+  const shown=Math.min(raw,s.maxDose);
+  const capped=raw>s.maxDose;
+
+  pending={
+    date:new Date().toISOString(),bg,carbs,food:$('food').value.trim(),weight:num('weight'),
+    mealDose:meal,correctionDose:correction,rawTotal:raw,shownTotal:shown,settings:s
+  };
+
+  let note='';
+  if(bg>=15) note+='<div class="note warn">High BG may require checks this app cannot perform.</div>';
+  if(capped) note+='<div class="note danger">Result exceeds the configured display cap of '+s.maxDose.toFixed(1)+' U.</div>';
+
+  document.querySelector('.shell').classList.add('allowScroll');
+
+  out.innerHTML=`
+    <div class="calcTop">
+      <div>
+        <div class="small">Arithmetic result for review</div>
+        <div class="dose">${shown.toFixed(1)} U</div>
+      </div>
+      <div style="min-width:145px">
+        <div class="resultRow"><span>Meal</span><strong>${meal.toFixed(1)} U</strong></div>
+        <div class="resultRow"><span>Correction</span><strong>${correction.toFixed(1)} U</strong></div>
+        <div class="resultRow"><span>Target BG</span><strong>${s.target.toFixed(1)}</strong></div>
+      </div>
+    </div>
+    ${note}
+    <div class="resultActions">
+      <button class="btn secondary" onclick="resetMeal()">Clear</button>
+      <button class="btn primary" onclick="saveMeal()">Confirm & save</button>
+    </div>`;
+
+  requestAnimationFrame(() => {
+    out.scrollIntoView({behavior:'smooth', block:'nearest'});
+  });
+}
+
+function saveMeal(){
+  if(!pending)return;
+  let h=[];try{h=JSON.parse(localStorage.getItem('fc_history')||'[]')}catch(e){}
+  h.unshift(pending);
+  localStorage.setItem('fc_history',JSON.stringify(h.slice(0,50)));
+  alert('Meal saved.');
+  pending=null;
+}
+function resetMeal(){
+  ['bg','food','weight','carbs','c100'].forEach(id=>$(id).value='');
+  clearPhoto();
+  $('result').innerHTML='';
+  $('result').classList.remove('show');
+  $('bgState').innerHTML='';
+  document.querySelector('.shell').classList.remove('allowScroll');
+  document.querySelector('.shell').scrollTo({top:0, behavior:'smooth'});
+  pending=null;
+}
+function renderHistory(){
+  let h=[];try{h=JSON.parse(localStorage.getItem('fc_history')||'[]')}catch(e){}
+  if(!h.length){$('history').innerHTML='No saved meals yet.';return}
+  $('history').innerHTML=h.slice(0,10).map(x=>`
+    <div class="historyItem">
+      <div class="historyTop"><span>${escapeHtml(x.food||'Meal')}</span><span>${x.shownTotal.toFixed(1)} U</span></div>
+      <div>${new Date(x.date).toLocaleString()} · BG ${x.bg.toFixed(1)} · ${x.carbs.toFixed(1)} g carbs${x.weight!=null?' · '+x.weight+' g':''}</div>
+    </div>`).join('');
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function openMenu(){renderHistory();$('menuModal').style.display='flex'}
+function closeMenu(){$('menuModal').style.display='none'}
+function outsideClose(e){if(e.target===$('menuModal'))closeMenu()}
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}))
+}
+loadSettings();bgState();
+</script>
+</body>
+</html>
