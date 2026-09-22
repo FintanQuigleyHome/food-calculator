@@ -20,3 +20,6 @@ BG → Take photo → confirm photo → meal details → calculate → confirm &
 - Once Calculate is pressed successfully, vertical scrolling is enabled.
 - The result area is brought into view so the Confirm & save button can always be reached.
 - Clearing the meal returns the app to the compact no-scroll input layout.
+
+## v1.5 AI meal analysis
+Adds `/api/analyse-meal.js` for Vercel. It uses the server-side `OPENAI_API_KEY` environment variable and OpenAI vision to estimate meal carbohydrates. The user must review/edit the estimate before the existing calculator is used. The AI endpoint does not calculate insulin doses and does not persist photos.
